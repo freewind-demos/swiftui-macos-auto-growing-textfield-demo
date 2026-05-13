@@ -40,7 +40,7 @@ struct ContentView: View {
                 }
 
                 removePlaceholderCharacter(from: editor)
-                text = editor.string
+                syncTextStatePreservingSelection(from: editor)
             }
         }
     }
@@ -70,6 +70,19 @@ struct ContentView: View {
             ? max(placeholderRange.location, selection.location - placeholderRange.length)
             : selection.location
         editor.setSelectedRange(NSRange(location: newLocation, length: selection.length))
+    }
+
+    private func syncTextStatePreservingSelection(from editor: NSTextView) {
+        let selection = editor.selectedRange()
+        text = editor.string
+
+        DispatchQueue.main.async {
+            guard let editor = currentEditor() else {
+                return
+            }
+
+            editor.setSelectedRange(selection)
+        }
     }
 
     private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
