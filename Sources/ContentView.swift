@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
@@ -14,12 +15,41 @@ struct ContentView: View {
         text += "\n\(Self.appendedLine)"
     }
 
+    private func currentEditor() -> NSTextView? {
+        NSApp.keyWindow?.firstResponder as? NSTextView
+    }
+
+    private func insertNewlineAndDebugText() {
+        guard let editor = currentEditor() else {
+            return
+        }
+
+        editor.insertText("A", replacementRange: editor.selectedRange())
+
+        DispatchQueue.main.async {
+            guard let editor = currentEditor() else {
+                return
+            }
+
+            editor.doCommand(by: #selector(NSResponder.moveLeft(_:)))
+
+            DispatchQueue.main.async {
+                guard let editor = currentEditor() else {
+                    return
+                }
+
+                editor.doCommand(by: #selector(NSResponder.insertLineBreak(_:)))
+                text = editor.string
+            }
+        }
+    }
+
     private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
         guard keyPress.key == .return, keyPress.modifiers.contains(.option) else {
             return .ignored
         }
 
-        appendLine()
+        insertNewlineAndDebugText()
         return .handled
     }
 
@@ -30,17 +60,17 @@ struct ContentView: View {
             }
 
             TextField("请输入多行内容", text: $text, axis: .vertical)
-                .textFieldStyle(.plain)
-                .font(.body)
-                .lineLimit(1...16)
-                .onKeyPress(.return, phases: .down, action: handleKeyPress)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(Color(nsColor: .textBackgroundColor))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
-                )
+            .textFieldStyle(.plain)
+            .font(.body)
+            .lineLimit(1...16)
+            .onKeyPress(.return, phases: .down, action: handleKeyPress)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(Color(nsColor: .textBackgroundColor))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
+            )
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
