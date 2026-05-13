@@ -10,6 +10,7 @@ struct ContentView: View {
 
     @State private var text = ""
     @State private var fieldHeight = FieldMetrics.minHeight
+    @State private var fieldIdentity = 0
     @FocusState private var isFocused: Bool
 
     private var mirrorText: String {
@@ -25,6 +26,10 @@ struct ContentView: View {
 
         let insertedLine = "\n\(FieldMetrics.debugInsertedLine)"
         text += insertedLine
+        fieldIdentity += 1
+        DispatchQueue.main.async {
+            isFocused = true
+        }
         return .handled
     }
 
@@ -46,6 +51,7 @@ struct ContentView: View {
 
             // 用镜像文本提前占出下一行，规避 macOS 多行 TextField 在换行当帧的闪动。
             TextField("请输入多行内容", text: $text, axis: .vertical)
+                .id(fieldIdentity)
                 .focused($isFocused)
                 .textFieldStyle(.plain)
                 .font(.body)
