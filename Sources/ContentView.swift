@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     private static let appendedLine = "ABC"
-    private static let placeholderCharacter = "\u{00A0}"
+    private static let placeholderCharacter = "\u{200B}"
 
     @State private var text = ""
 
@@ -32,25 +32,44 @@ struct ContentView: View {
                 return
             }
 
-            editor.doCommand(by: #selector(NSResponder.moveLeft(_:)))
+            editor.doCommand(by: #selector(NSResponder.insertLineBreak(_:)))
 
             DispatchQueue.main.async {
                 guard let editor = currentEditor() else {
                     return
                 }
 
-                editor.doCommand(by: #selector(NSResponder.insertLineBreak(_:)))
-
-                DispatchQueue.main.async {
-                    guard let editor = currentEditor() else {
-                        return
-                    }
-
-                    editor.doCommand(by: #selector(NSResponder.deleteForward(_:)))
-                    text = editor.string
-                }
+                removePlaceholderCharacter(from: editor)
+                text = editor.string
             }
         }
+    }
+
+    private func removePlaceholderCharacter(from editor: NSTextView) {
+        guard let textStorage = editor.textStorage else {
+            return
+        }
+
+        let selection = editor.selectedRange()
+        let nsString = textStorage.string as NSString
+        let backwardRange = NSRange(location: 0, length: min(selection.location, nsString.length))
+        var placeholderRange = nsString.range(of: Self.placeholderCharacter, options: .backwards, range: backwardRange)
+
+        if placeholderRange.location == NSNotFound {
+            let forwardRange = NSRange(location: min(selection.location, nsString.length), length: max(0, nsString.length - selection.location))
+            placeholderRange = nsString.range(of: Self.placeholderCharacter, options: [], range: forwardRange)
+        }
+
+        guard placeholderRange.location != NSNotFound else {
+            return
+        }
+
+        textStorage.replaceCharacters(in: placeholderRange, with: "")
+        let newLocation =
+            placeholderRange.location < selection.location
+            ? max(placeholderRange.location, selection.location - placeholderRange.length)
+            : selection.location
+        editor.setSelectedRange(NSRange(location: newLocation, length: selection.length))
     }
 
     private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
