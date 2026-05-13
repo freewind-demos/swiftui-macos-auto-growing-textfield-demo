@@ -5,6 +5,7 @@ struct ContentView: View {
         static let innerPadding: CGFloat = 12
         static let minHeight: CGFloat = 24
         static let mirrorVerticalPadding: CGFloat = 4
+        static let debugInsertedLine = "ABC"
     }
 
     @State private var text = ""
@@ -15,6 +16,16 @@ struct ContentView: View {
         let base = text.isEmpty ? " " : text
         guard isFocused else { return base }
         return base + "\n "
+    }
+
+    private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
+        guard keyPress.key == .return, keyPress.modifiers.contains(.option) else {
+            return .ignored
+        }
+
+        let insertedLine = "\n\(FieldMetrics.debugInsertedLine)"
+        text += insertedLine
+        return .handled
     }
 
     var body: some View {
@@ -41,6 +52,7 @@ struct ContentView: View {
                 .lineLimit(1...16)
                 .frame(height: fieldHeight, alignment: .topLeading)
                 .transaction { $0.animation = nil }
+                .onKeyPress(.return, phases: .down, action: handleKeyPress)
         }
             .onPreferenceChange(FieldHeightPreferenceKey.self) { nextHeight in
                 fieldHeight = max(FieldMetrics.minHeight, ceil(nextHeight))
