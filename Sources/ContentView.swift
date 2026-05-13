@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     private static let appendedLine = "ABC"
+    private static let placeholderCharacter = "\u{00A0}"
 
     @State private var text = ""
 
@@ -24,7 +25,7 @@ struct ContentView: View {
             return
         }
 
-        editor.insertText("A", replacementRange: editor.selectedRange())
+        editor.insertText(Self.placeholderCharacter, replacementRange: editor.selectedRange())
 
         DispatchQueue.main.async {
             guard let editor = currentEditor() else {
@@ -39,7 +40,15 @@ struct ContentView: View {
                 }
 
                 editor.doCommand(by: #selector(NSResponder.insertLineBreak(_:)))
-                text = editor.string
+
+                DispatchQueue.main.async {
+                    guard let editor = currentEditor() else {
+                        return
+                    }
+
+                    editor.doCommand(by: #selector(NSResponder.deleteForward(_:)))
+                    text = editor.string
+                }
             }
         }
     }
