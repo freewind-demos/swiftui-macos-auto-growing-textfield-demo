@@ -116,7 +116,7 @@ struct ContentView: View {
             TextField("请输入多行内容", text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.body)
-                .lineLimit(1...16)
+                .lineLimit(1...)
                 .onKeyPress(.return, phases: .down, action: handleKeyPress)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
